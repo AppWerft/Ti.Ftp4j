@@ -11,12 +11,14 @@ This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/
 
 var FTP = require("de.appwerft.ftp4j");
 
-var client = FTP.createFTPclient();
-client.connect("ftp.org",21);
-client.addEventListener("connected",function(){
-	client.login("login","password");
+var client = FTP.createFTPclient({
+	password : "geheim",
+	host : ftp.org,
+	port : 21,
+	login : "vip"
 });
-client.addEventListener("logincomplete",function(){
+
+client.addEventListener("logincomplete",function() {
 	client.disconnect(false);
 });
 
