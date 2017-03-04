@@ -19,13 +19,8 @@ public class Ftp4jModule extends KrollModule {
 		super();
 	}
 
-	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app) {
-	}
-
 	@Override
 	public String getApiName() {
 		return "FTPclient";
 	}
-
 }
