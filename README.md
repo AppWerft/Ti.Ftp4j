@@ -10,11 +10,10 @@ This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/
 ###Connect/login
 ```javascript
 var FTP = require("de.appwerft.ftp4j");
-
-var FTP = require("de.appwerft.ftp4j");
 var client = FTP.createFTPclient({
 	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/Radarfilm_WEB_DL.gif",
 	file : Ti.Filesystem.getFile( Ti.Filesystem.applicationCacheDirectory,"rainradar.gif");
+	method : "GET",
 	onload : function(e) {
 		console.log(e);
 		//client.disconnect();
