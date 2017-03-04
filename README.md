@@ -1,4 +1,4 @@
-#Ti.Ftp4j <img src="http://resource.thaicreate.com/upload/tutorial/java-ftp-upload-01.jpg?v=1001" width=240 />
+#Ti.Ftp4j <img src="http://resource.thaicreate.com/upload/tutorial/java-ftp-upload-01.jpg?v=1001" width=140 />
 
 This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/projects/ftp4j/index.php)
 
