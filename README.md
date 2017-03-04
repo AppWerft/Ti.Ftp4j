@@ -13,32 +13,27 @@ var FTP = require("de.appwerft.ftp4j");
 
 var FTP = require("de.appwerft.ftp4j");
 var client = FTP.createFTPclient({
-	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/",
+	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/Radarfilm_WEB_DL.gif",
+	file : Ti.Filesystem.getFile( Ti.Filesystem.applicationCacheDirectory,"rainradar.gif");
 	onload : function(e) {
 		console.log(e);
-		client.disconnect();
+		//client.disconnect();
 	},
 	onerror: function(e) {
 		console.log(e);
 		client.disconnect();
+	},
+	onprogress: function(e) {
+		console.log(e);
 	}
 });
 ```
 If the URL is a path (without file) you will get a list of file names. If you request a full path with file you will get additional the file as Blob.
 ###Browsing the remote site
 
-Get the current directory absolute path calling:
-```javascript
-var currentDirectory = client.currentDirectory();
-```
 Change directory with:
 ```javascript
 client.changeDirectory(newPath);
-```
-You can use both absolute and relative paths:
-```javascript
-client.changeDirectory("/an/absolute/one");
-client.changeDirectory("relative");
 ```
 Back to the parent directory with:
 ```javascript

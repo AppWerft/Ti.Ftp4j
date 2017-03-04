@@ -8,6 +8,7 @@
  */
 package de.appwerft.ftp4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,6 +16,7 @@ import java.net.URL;
 import it.sauronsoftware.ftp4j.FTPAbortedException;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferException;
+import it.sauronsoftware.ftp4j.FTPDataTransferListener;
 import it.sauronsoftware.ftp4j.FTPException;
 import it.sauronsoftware.ftp4j.FTPFile;
 import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
@@ -38,8 +40,9 @@ public class FTPclientProxy extends KrollProxy {
 	private String password = "ftp4j";
 	private int port = 0;
 
-	private String path = "/";
-	private String file = null;
+	private String fullPath = "/";
+	private String directory = null;
+	private String fileName = null;
 	private FTPClient client = new FTPClient();
 	private KrollFunction onLoad;
 	private KrollFunction onError;
@@ -74,8 +77,7 @@ public class FTPclientProxy extends KrollProxy {
 					password = user.split(":")[1];
 				}
 				port = url.getPort();
-				path = url.getPath();
-				file = url.getFile();
+				fullPath = url.getPath();
 			} catch (MalformedURLException e) {
 				Log.e(LCAT,
 						"wrong format url " + opts.getString(TiC.PROPERTY_URL));
@@ -83,13 +85,22 @@ public class FTPclientProxy extends KrollProxy {
 				sendError("malformedIURL", 0);
 			}
 		}
+		String[] parts = fullPath.split("/");
+		if (parts[parts.length - 1].equals("")) {
+			/* pure path without file */
+			directory = fullPath;
+		} else {
+			fileName = parts[parts.length - 1];
+			directory = fullPath.substring(0,
+					fullPath.length() - fileName.length());
+		}
 		(new FTPsessionConnect()).execute();
 
 	}
 
 	@Kroll.method
 	public void disconnect() {
-		if (client != null) {
+		if (client != null && client.isConnected()) {
 			Thread t = new Thread() {
 				public void run() {
 					try {
@@ -123,6 +134,7 @@ public class FTPclientProxy extends KrollProxy {
 					| FTPIllegalReplyException | FTPException e1) {
 				e1.printStackTrace();
 				sendError(e1.getMessage(), 0);
+				return "E";
 			}
 			try {
 				client.login(login, password);
@@ -130,23 +142,17 @@ public class FTPclientProxy extends KrollProxy {
 					| FTPIllegalReplyException | FTPException e1) {
 				e1.printStackTrace();
 				sendError(e1.getMessage(), 0);
+				return "E";
 			}
-			String[] list = null;
+			if (!client.isConnected())
+				return "";
 			try {
-				list = client.listNames();
-			} catch (IllegalStateException | IOException
-					| FTPIllegalReplyException | FTPException
-					| FTPDataTransferException | FTPAbortedException
-					| FTPListParseException e1) {
-				sendError(e1.getMessage(), 0);
-				e1.printStackTrace();
-			}
-			try {
-				client.changeDirectory("." + path);
+				client.changeDirectory("." + directory);
 			} catch (IllegalStateException | IOException
 					| FTPIllegalReplyException | FTPException e1) {
 				e1.printStackTrace();
 				sendError(e1.getMessage(), 0);
+				return "E";
 			}
 			String[] fileList = null;
 			try {
@@ -161,24 +167,31 @@ public class FTPclientProxy extends KrollProxy {
 				e.printStackTrace();
 				sendError(e.getMessage(), 0);
 			}
-
-			kd.put("host", client.getHost());
-			kd.put("username", client.getUsername());
 			try {
 				kd.put("currentDirectory", client.currentDirectory());
 			} catch (IllegalStateException | IOException
 					| FTPIllegalReplyException | FTPException e1) {
 				sendError(e1.getMessage(), 0);
 				e1.printStackTrace();
+				return "E";
 			}
+
 			kd.put("fileNames", fileList);
-			if (hasListeners("onready")) {
-				fireEvent("onready", kd);
-			}
 			if (onLoad != null) {
 				onLoad.call(getKrollObject(), kd);
 			}
-
+			if (fileName != null) {
+				try {
+					File tempFile = File.createTempFile(fileName, ".tmp");
+					client.download(fileName, tempFile,
+							new MyTransferListener());
+				} catch (IllegalStateException | IOException
+						| FTPIllegalReplyException | FTPException
+						| FTPDataTransferException | FTPAbortedException e) {
+					e.printStackTrace();
+					sendError(e.getMessage(), 0);
+				}
+			}
 			return "Executed";
 		}
 
@@ -190,6 +203,37 @@ public class FTPclientProxy extends KrollProxy {
 			kd.put("message", message);
 			kd.put("error", number);
 			onError.call(getKrollObject(), kd);
+		}
+
+	}
+
+	public class MyTransferListener implements FTPDataTransferListener {
+		int transfered = 0;
+
+		public void started() {
+			Log.d(LCAT, "Transfer started");
+			// Transfer started
+		}
+
+		public void transferred(int length) {
+			transfered += length;
+			Log.d(LCAT, "length=" + transfered);
+			// Yet other length bytes has been transferred since the last time
+			// this
+			// method was called
+		}
+
+		public void completed() {
+			Log.d(LCAT, "Transfer complete");
+			// Transfer completed
+		}
+
+		public void aborted() {
+			// Transfer aborted
+		}
+
+		public void failed() {
+			// Transfer failed
 		}
 
 	}
