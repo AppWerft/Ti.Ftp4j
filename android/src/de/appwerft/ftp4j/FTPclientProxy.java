@@ -190,7 +190,12 @@ public class FTPclientProxy extends KrollProxy {
 			String[] fileList = null;
 			try {
 				try {
-					fileList = client.listNames();
+					FTPFile[] list = client.list();
+					for (FTPFile item : list) {
+						fsize = item.getSize();
+						kd.put("size", fsize);
+						kd.put("mtime", item.getModifiedDate());
+					}
 				} catch (IllegalStateException | IOException
 						| FTPIllegalReplyException | FTPException e1) {
 					e1.printStackTrace();
@@ -265,7 +270,6 @@ public class FTPclientProxy extends KrollProxy {
 
 		public void started() {
 			Log.d(LCAT, ">>>>>>>>>>>>>>>>>>> Transfer started");
-
 		}
 
 		public void transferred(int length) {
