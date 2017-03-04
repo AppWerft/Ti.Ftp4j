@@ -3,11 +3,11 @@
 This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/projects/ftp4j/index.php)
 
  _The ftp4j library implements a Java full-features FTP client. With ftp4j embedded in your application you can: transfer files (upload and download), browse the remote FTP site (directory listing included), create, delete, rename and move remote directories and files._
-
+<img src="http://resource.thaicreate.com/upload/tutorial/java-ftp-upload-01.jpg?v=1001" width=240 />
 
 ##Usage
 
-###Connect/login
+###Download
 ```javascript
 var FTP = require("de.appwerft.ftp4j");
 var client = FTP.createFTPclient({
