@@ -8,6 +8,11 @@
  */
 package de.appwerft.ftp4j;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import it.sauronsoftware.ftp4j.FTPAbortedException;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferException;
@@ -17,21 +22,13 @@ import it.sauronsoftware.ftp4j.FTPFile;
 import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import it.sauronsoftware.ftp4j.FTPListParseException;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.common.Log;
-import org.appcelerator.titanium.TiBlob;
+import org.appcelerator.kroll.common.TiConfig;
 import org.appcelerator.titanium.TiC;
-import org.appcelerator.titanium.io.TiBaseFile;
-import org.appcelerator.titanium.io.TiFile;
-import org.appcelerator.titanium.io.TiFileFactory;
 
 import android.os.AsyncTask;
 
@@ -42,19 +39,13 @@ public class FTPclientProxy extends KrollProxy {
 	private String login = "anonymous";
 	private String password = "ftp4j";
 	private int port = 0;
-	private TiBlob responseData;
-	private OutputStream responseOut;
+
 	private String fullPath = "/";
 	private String directory = null;
 	private String fileName = null;
-	private String mtime;
-	private long fsize;
-
-	private TiFile responseFile;
 	private FTPClient client = new FTPClient();
 	private KrollFunction onLoad;
 	private KrollFunction onError;
-	private KrollFunction onProgress;
 
 	public FTPclientProxy() {
 		super();
@@ -69,34 +60,10 @@ public class FTPclientProxy extends KrollProxy {
 				onLoad = (KrollFunction) o;
 			}
 		}
-		if (opts.containsKeyAndNotNull("onprogress")) {
-			Object o = opts.get("onprogress");
-			if (o instanceof KrollFunction) {
-				onProgress = (KrollFunction) o;
-			}
-		}
 		if (opts.containsKeyAndNotNull(TiC.PROPERTY_ONERROR)) {
 			Object o = opts.get(TiC.PROPERTY_ONERROR);
 			if (o instanceof KrollFunction) {
 				onError = (KrollFunction) o;
-			}
-		}
-		if (opts.containsKeyAndNotNull(TiC.PROPERTY_FILE)) {
-			Object f = opts.get(TiC.PROPERTY_FILE);
-			Log.d(LCAT, f.getClass().getSimpleName());
-			if (f instanceof String) {
-				String fileName = (String) f;
-				TiBaseFile baseFile = TiFileFactory.createTitaniumFile(
-						fileName, false);
-				if (baseFile instanceof TiFile) {
-					responseFile = (TiFile) baseFile;
-				} else
-					Log.w(LCAT, "no instanceof TiFile");
-			}
-
-			if (responseFile == null) {
-				Log.w(LCAT,
-						"Ignore the provided response file because it is not valid / writable.");
 			}
 		}
 		if (opts.containsKeyAndNotNull(TiC.PROPERTY_URL)) {
@@ -200,44 +167,24 @@ public class FTPclientProxy extends KrollProxy {
 				e.printStackTrace();
 				sendError(e.getMessage(), 0);
 			}
+			try {
+				kd.put("currentDirectory", client.currentDirectory());
+			} catch (IllegalStateException | IOException
+					| FTPIllegalReplyException | FTPException e1) {
+				sendError(e1.getMessage(), 0);
+				e1.printStackTrace();
+				return "E";
+			}
+
 			kd.put("fileNames", fileList);
-			if (fileName == null && onLoad != null) {
+			if (onLoad != null) {
 				onLoad.call(getKrollObject(), kd);
-				try {
-					client.disconnect(false);
-				} catch (IllegalStateException | IOException
-						| FTPIllegalReplyException | FTPException e) {
-					e.printStackTrace();
-				}
-				return "";
 			}
 			if (fileName != null) {
 				try {
-					FTPFile[] list = client.list(fileName);
-					for (FTPFile item : list) {
-						fsize = item.getSize();
-						kd.put("size", fsize);
-						kd.put("mtime", item.getModifiedDate());
-					}
-					if (onLoad != null)
-						onLoad.call(getKrollObject(), kd);
-				} catch (IllegalStateException | IOException
-						| FTPIllegalReplyException | FTPException
-						| FTPDataTransferException | FTPAbortedException
-						| FTPListParseException e1) {
-					e1.printStackTrace();
-					sendError(e1.getMessage(), 0);
-					return "";
-				}
-
-				try {
-					if (responseFile != null) {
-						Log.d(LCAT, responseFile.getNativeFile()
-								.getAbsolutePath());
-						client.download(fileName, responseFile.getNativeFile()
-								.getAbsoluteFile(), new MyTransferListener());
-					} else
-						Log.w(LCAT, "no file for download");
+					File tempFile = File.createTempFile(fileName, ".tmp");
+					client.download(fileName, tempFile,
+							new MyTransferListener());
 				} catch (IllegalStateException | IOException
 						| FTPIllegalReplyException | FTPException
 						| FTPDataTransferException | FTPAbortedException e) {
@@ -261,30 +208,23 @@ public class FTPclientProxy extends KrollProxy {
 	}
 
 	public class MyTransferListener implements FTPDataTransferListener {
-		double transferred = 0L;
+		int transfered = 0;
 
 		public void started() {
-			Log.d(LCAT, ">>>>>>>>>>>>>>>>>>> Transfer started");
-
+			Log.d(LCAT, "Transfer started");
+			// Transfer started
 		}
 
 		public void transferred(int length) {
-			KrollDict kd = new KrollDict();
-			kd.put("total", fsize);
-			transferred += length;
-			kd.put("transferred", transferred);
-			kd.put("progress", ((double) transferred) / ((double) fsize));
-			if (onProgress != null)
-				onProgress.call(getKrollObject(), kd);
-			else
-				Log.w(LCAT, "onprogess was null");
+			transfered += length;
+			Log.d(LCAT, "length=" + transfered);
 			// Yet other length bytes has been transferred since the last time
 			// this
 			// method was called
 		}
 
 		public void completed() {
-			Log.d(LCAT, ">>>>>>>>>>>>>>>>>>>>>>>>Transfer complete");
+			Log.d(LCAT, "Transfer complete");
 			// Transfer completed
 		}
 
@@ -293,10 +233,8 @@ public class FTPclientProxy extends KrollProxy {
 		}
 
 		public void failed() {
-			Log.d(LCAT, ">>>>>>>>>>>>>>>>>>>>>>>>Transfer failed");
 			// Transfer failed
 		}
 
 	}
-
 }
