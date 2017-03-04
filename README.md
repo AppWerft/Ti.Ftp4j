@@ -11,17 +11,20 @@ This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/
 ```javascript
 var FTP = require("de.appwerft.ftp4j");
 
+var FTP = require("de.appwerft.ftp4j");
 var client = FTP.createFTPclient({
-	host : "ftp.org",
-	port : 21,
-	login : "vip",
-	password : "geheim",
-});
-
-client.addEventListener("logincomplete",function() {
-	client.disconnect(false);
+	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/",
+	onload : function(e) {
+		console.log(e);
+		client.disconnect();
+	},
+	onerror: function(e) {
+		console.log(e);
+		client.disconnect();
+	}
 });
 ```
+If the URL is a path (without file) you will get a list of file names. If you request a full path with file you will get additional the file as Blob.
 ###Browsing the remote site
 
 Get the current directory absolute path calling:
@@ -62,4 +65,14 @@ var list = client.list();
 list.forEach(function(file){
 	console.log(file); // object with name, ctime, size etc.
 });
+```
+Only the names (more stable)
+```javascript
+var list = client.listNames();
+list.forEach(function(file){
+	console.log(file); 
+});
+```
+###Download
+
 ```
