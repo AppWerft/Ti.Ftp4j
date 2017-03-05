@@ -31,13 +31,14 @@ public class DownloadProxy extends KrollProxy {
 
 	public DownloadProxy() {
 		super();
+		client = new FTPClient();
 	}
 
 	@Override
 	public void handleCreationDict(KrollDict opts) {
 		super.handleCreationDict(opts);
 		this.opts = opts;
-		new FTPclient(this);
+		new TiFTPclient(this);
 	}
 
 	@Kroll.method

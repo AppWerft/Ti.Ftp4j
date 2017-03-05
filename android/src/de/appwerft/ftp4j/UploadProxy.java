@@ -37,7 +37,7 @@ public class UploadProxy extends KrollProxy {
 	public void handleCreationDict(KrollDict opts) {
 		super.handleCreationDict(opts);
 		this.opts = opts;
-		new FTPclient(this);
+		new TiFTPclient(this);
 	}
 
 	@Kroll.method
