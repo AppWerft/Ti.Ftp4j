@@ -11,7 +11,7 @@ _The ftp4j library implements a Java full-features FTP client. With ftp4j embedd
 ###Download
 ```javascript
 var FTP = require("de.appwerft.ftp4j");
-var client = FTP.createDownloader({
+var client = FTP.createDownload({
 	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/Radarfilm_WEB_DL.gif",
 	file : Ti.Filesystem.getFile( Ti.Filesystem.applicationCacheDirectory,"rainradar.gif");
 	keepalive : false, // autodisconenct after download 
@@ -32,7 +32,7 @@ If the URL is a path (without file) you will get a list of file names. If you re
 ###Upload
 ```javascript
 var FTP = require("de.appwerft.ftp4j");
-var client = FTP.createUploader({
+var client = FTP.createUpload({
 	url : "ftp://gds32025:cEtPCZbY@ftp-outgoing2.dwd.de:21/gds/specials/radar/Radarfilm_WEB_DL.gif",
 	file : Ti.Filesystem.getFile( Ti.Filesystem.applicationCacheDirectory,"rainradar.gif");
 	keepalive : false, // autodisconenct after download 
