@@ -4,7 +4,7 @@ This is the Titanium version of FTP client [ftp4j](http://www.sauronsoftware.it/
 
 _The ftp4j library implements a Java full-features FTP client. With ftp4j embedded in your application you can: transfer files (upload and download), browse the remote FTP site (directory listing included), create, delete, rename and move remote directories and files._
 
-
+A pure JS implementaion you can find in [Kosso's gist](https://gist.github.com/kosso/32b6dcaba0dbf9f9d7fb)
 
 ##Usage
 
@@ -13,6 +13,7 @@ _The ftp4j library implements a Java full-features FTP client. With ftp4j embedd
 var FTP = require("de.appwerft.ftp4j");
 var client = FTP.createDownload({
 	url : "ftp://gds32025:cE***bY@ftp-outgoing2.dwd.de:21/gds/specials/radar/Radarfilm_WEB_DL.gif",
+	/* you use file or filename (nativePath) */
 	file : Ti.Filesystem.getFile( Ti.Filesystem.applicationCacheDirectory,"rainradar.gif");
 	keepalive : false, // autodisconenct after download 
 	onload : function(e) {
